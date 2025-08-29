@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Calendário, Matérias e Anotações</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    display: flex;
+    height: 100vh;
+  }
+  #sidebar-left {
+    width: 220px;
+    background: #2c3e50;
+    color: white;
+    padding: 20px;
+    box-sizing: border-box;
+  }
+  #sidebar-left h2 {
+    margin-top: 0;
+    margin-bottom: 15px;
+  }
+  #sidebar-left ul {
+    list-style: none;
+    padding: 0;
+  }
+  #sidebar-left ul li {
+    margin-bottom: 10px;
+  }
+  #sidebar-left ul li a {
+    color: #ecf0f1;
+    text-decoration: none;
+    cursor: pointer;
+  }
+  #sidebar-left ul li a:hover {
+    text-decoration: underline;
+  }
+
+  #main {
+    flex: 1;
+    padding: 20px;
+    box-sizing: border-box;
+    overflow-y: auto;
+  }
+
+  #calendar {
+    max-width: 600px;
+    margin: auto;
+  }
+
+  #calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  #calendar-header button {
+    padding: 5px 10px;
+    cursor: pointer;
+  }
+
+  #month-year {
+    font-size: 1.2em;
+    font-weight: bold;
+  }
+
+  #days {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    margin-top: 10px;
+    text-align: center;
+    font-weight: bold;
+  }
+
+  #dates {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+    margin-top: 5px;
+  }
+
+  .date-cell {
+    padding: 10px;
+    border: 1px solid #ddd;
+    min-height: 80px;
+    cursor: pointer;
+    position: relative;
+    background: white;
+    border-radius: 5px;
+  }
+
+  .date-cell.inactive {
+    color: #ccc;
+    background: #f9f9f9;
+    cursor: default;
+  }
+
+  .date-number {
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+
+  .reminder {
+    background: #3498db;
+    color: white;
+    font-size: 0.8em;
+    padding: 2px 4px;
+    margin-top: 3px;
+    border-radius: 3px;
+    cursor: pointer;
+    word-break: break-word;
+  }
+
+  /* Modal */
+  #modal-bg {
+    position: fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+
+  #modal {
+    background: white;
+    padding: 20px;
+    border-radius: 5px;
+    width: 300px;
+    box-sizing: border-box;
+  }
+
+  #modal h3 {
+    margin-top: 0;
+  }
+
+  #modal input[type="text"] {
+    width: 100%;
+    padding: 7px;
+    margin-top: 10px;
+    margin-bottom: 15px;
+    box-sizing: border-box;
+  }
+
+  #modal button {
+    padding: 7px 12px;
+    margin-right: 10px;
+  }
+
+  /* Sidebar direita: Anotações */
+  #sidebar-right {
+    width: 320px;
+    background: #f4f4f4;
+    padding: 20px;
+    box-sizing: border-box;
+    border-left: 1px solid #ccc;
+    overflow-y: auto;
+  }
+
+  #sidebar-right h2 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: #333;
+  }
+
+  .note-section {
+    margin-bottom: 20px;
+  }
+
+  .note-section label {
+    display: block;
+    font-weight: bold;
+    margin-bottom: 6px;
+    color: #555;
+  }
+
+  .note-section textarea {
+    width: 100%;
+    height: 100px;
+    resize: vertical;
+    padding: 8px;
+    font-size: 1em;
+    box-sizing: border-box;
+    border-radius: 4px;
+    border: 1px solid #bbb;
+    font-family: inherit;
+  }
+
+  .note-section textarea:focus {
+    border-color: #3498db;
+    outline: none;
+  }
+
+  /* Scrollbar styles for right sidebar */
+  #sidebar-right::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  #sidebar-right::-webkit-scrollbar-thumb {
+    background-color: #bbb;
+    border-radius: 4px;
+  }
+</style>
+</head>
+<body>
+
+<div id="sidebar-left">
+  <h2>Matérias</h2>
+  <ul id="subjects-list">
+    <li><a href="#" data-url="materia-matematica.html">Matemática</a></li>
+    <li><a href="#" data-url="materia-portugues.html">Português</a></li>
+    <li><a href="#" data-url="materia-historia.html">História</a></li>
+    <li><a href="#" data-url="materia-ciencias.html">Ciências</a></li>
+  </ul>
+</div>
+
+<div id="main">
+  <div id="calendar">
+    <div id="calendar-header">
+      <button id="prev-month">&lt;</button>
+      <div id="month-year"></div>
+      <button id="next-month">&gt;</button>
+    </div>
+    <div id="days">
+      <div>Dom</div>
+      <div>Seg</div>
+      <div>Ter</div>
+      <div>Qua</div>
+      <div>Qui</div>
+      <div>Sex</div>
+      <div>Sáb</div>
+    </div>
+    <div id="dates"></div>
+  </div>
+</div>
+
+<div id="sidebar-right">
+  <h2>Anotações</h2>
+
+  <div class="note-section">
+    <label for="metas">Metas</label>
+    <textarea id="metas" placeholder="Digite suas metas..."></textarea>
+  </div>
+
+  <div class="note-section">
+    <label for="focos">Seus focos atuais</label>
+    <textarea id="focos" placeholder="Digite seus focos atuais..."></textarea>
+  </div>
+
+  <div class="note-section">
+    <label for="atividades">Atividades realizadas</label>
+    <textarea id="atividades" placeholder="Digite as atividades realizadas..."></textarea>
+  </div>
+</div>
+
+<!-- Modal para adicionar lembrete -->
+<div id="modal-bg">
+  <div id="modal">
+    <h3>Adicionar Lembrete</h3>
+    <div id="modal-date"></div>
+    <input type="text" id="reminder-text" placeholder="Digite o lembrete" />
+    <div>
+      <button id="save-reminder">Salvar</button>
+      <button id="cancel-reminder">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const subjectsList = document.getElementById('subjects-list');
+
+  // Redireciona para a página da matéria ao clicar
+  subjectsList.addEventListener('click', (e) => {
+    if(e.target.tagName === 'A') {
+      e.preventDefault();
+      const url = e.target.getAttribute('data-url');
+      window.location.href = url;
+    }
+  });
+
+  // Calendário
+  const monthYearDisplay = document.getElementById('month-year');
+  const datesContainer = document.getElementById('dates');
+  const prevMonthBtn = document.getElementById('prev-month');
+  const nextMonthBtn = document.getElementById('next-month');
+
+  const modalBg = document.getElementById('modal-bg');
+  const modalDateDisplay = document.getElementById('modal-date');
+  const reminderInput = document.getElementById('reminder-text');
+  const saveReminderBtn = document.getElementById('save-reminder');
+  const cancelReminderBtn = document.getElementById('cancel-reminder');
+
+  let currentDate = new Date();
+  let selectedDate = null;
+
+  // Carregar lembretes do localStorage
+  function loadReminders() {
+    const rems = localStorage.getItem('reminders');
+    return rems ? JSON.parse(rems) : {};
+  }
+
+  // Salvar lembretes no localStorage
+  function saveReminders(reminders) {
+    localStorage.setItem('reminders', JSON.stringify(reminders));
+  }
+
+  function formatDateKey(date) {
+    return date.toISOString().split('T')[0]; // yyyy-mm-dd
+  }
+
+  function renderCalendar() {
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+
+    monthYearDisplay.textContent = currentDate.toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+
+    // Primeiro dia do mês
+    const firstDay = new Date(year, month, 1);
+    const firstWeekDay = firstDay.getDay(); // 0=Dom, 6=Sab
+
+    // Quantidade de dias no mês
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    // Quantidade de dias no mês anterior (para preencher células inativas)
+    const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+    datesContainer.innerHTML = '';
+
+    // Lembretes
+    const reminders = loadReminders();
+
+    // Preencher dias do mês anterior (inativos)
+    for(let i = firstWeekDay - 1; i >= 0; i--) {
+      const cell = document.createElement('div');
+      cell.classList.add('date-cell', 'inactive');
+      cell.textContent = daysInPrevMonth - i;
+      datesContainer.appendChild(cell);
+    }
+
+    // Preencher dias do mês atual
+    for(let day = 1; day <= daysInMonth; day++) {
+      const cell = document.createElement('div');
+      cell.classList.add('date-cell');
+      const dateObj = new Date(year, month, day);
+
+      // Número do dia
+      const dayNumber = document.createElement('div');
+      dayNumber.classList.add('date-number');
+      dayNumber.textContent = day;
+      cell.appendChild(dayNumber);
+
+      // Mostrar lembretes se houver
+      const key = formatDateKey(dateObj);
+      if(reminders[key]) {
+        reminders[key].forEach((reminder, idx) => {
+          const remDiv = document.createElement('div');
+          remDiv.classList.add('reminder');
+          remDiv.textContent = reminder;
+          remDiv.title = "Clique para excluir este lembrete";
+          // Permite excluir ao clicar
+          remDiv.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if(confirm(`Excluir lembrete: "${reminder}"?`)) {
+              reminders[key].splice(idx, 1);
+              if(reminders[key].length === 0) {
+                delete reminders[key];
+              }
+              saveReminders(reminders);
+              renderCalendar();
+            }
+          });
+          cell.appendChild(remDiv);
+        });
+      }
+
+      // Adicionar lembrete ao clicar no dia
+      cell.addEventListener('click', () => {
+        selectedDate = dateObj;
+        modalDateDisplay.textContent = `Data: ${key}`;
+        reminderInput.value = '';
+        modalBg.style.display = 'flex';
+        reminderInput.focus();
+      });
+
+      datesContainer.appendChild(cell);
+    }
+
+    // Preencher dias do próximo mês para completar a semana (até sábado)
+    const totalCells = firstWeekDay + daysInMonth;
+    const nextDays = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+
+    for(let i = 1; i <= nextDays; i++) {
+      const cell = document.createElement('div');
+      cell.classList.add('date-cell', 'inactive');
+      cell.textContent = i;
+      datesContainer.appendChild(cell);
+    }
+  }
+
+  prevMonthBtn.addEventListener('click', () => {
+    currentDate.setMonth(currentDate.getMonth() - 1);
+    renderCalendar();
+  });
+
+  nextMonthBtn.addEventListener('click', () => {
+    currentDate.setMonth(currentDate.getMonth() + 1);
+    renderCalendar();
+  });
+
+  saveReminderBtn.addEventListener('click', () => {
+    const text = reminderInput.value.trim();
+    if(text === '') {
+      alert('Digite um lembrete válido!');
+      return;
+    }
+    const key = formatDateKey(selectedDate);
+    const reminders = loadReminders();
+    if(!reminders[key]) reminders[key] = [];
+    reminders[key].push(text);
+    saveReminders(reminders);
+    modalBg.style.display = 'none';
+    renderCalendar();
+  });
+
+  cancelReminderBtn.addEventListener('click', () => {
+    modalBg.style.display = 'none';
+  });
+
+  // Fecha modal se clicar fora
+  modalBg.addEventListener('click', (e) => {
+    if(e.target === modalBg) {
+      modalBg.style.display = 'none';
+    }
+  });
+
+  // --- Anotações ---
+
+  const metasTextarea = document.getElementById('metas');
+  const focosTextarea = document.getElementById('focos');
+  const atividadesTextarea = document.getElementById('atividades');
+
+  function loadNotes() {
+    metasTextarea.value = localStorage.getItem('nota-metas') || '';
+    focosTextarea.value = localStorage.getItem('nota-focos') || '';
+    atividadesTextarea.value = localStorage.getItem('nota-atividades') || '';
+  }
+
+  function saveNote(key, value) {
+    localStorage.setItem(key, value);
+  }
+
+  metasTextarea.addEventListener('input', () => {
+    saveNote('nota-metas', metasTextarea.value);
+  });
+
+  focosTextarea.addEventListener('input', () => {
+    saveNote('nota-focos', focosTextarea.value);
+  });
+
+  atividadesTextarea.addEventListener('input', () => {
+    saveNote('nota-atividades', atividadesTextarea.value);
+  });
+
+  loadNotes();
+  renderCalendar();
+
+</script>
+
+</body>
+</html>
