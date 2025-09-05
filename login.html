@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Login</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    display: flex;
+    height: 100vh;
+    justify-content: center;
+    align-items: center;
+    background: #f0f2f5;
+  }
+  .container {
+    background: white;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 0 8px rgba(0,0,0,0.1);
+    width: 320px;
+  }
+  h2 {
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  input[type=text], input[type=password] {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    box-sizing: border-box;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1em;
+  }
+  button {
+    width: 100%;
+    padding: 10px;
+    background: #2c3e50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1em;
+    cursor: pointer;
+  }
+  button:hover {
+    background: #34495e;
+  }
+  .message {
+    margin-top: 15px;
+    text-align: center;
+    color: red;
+  }
+  .link {
+    margin-top: 10px;
+    text-align: center;
+  }
+  .link a {
+    color: #2c3e50;
+    text-decoration: none;
+  }
+  .link a:hover {
+    text-decoration: underline;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h2>Login</h2>
+  <input type="text" id="username" placeholder="Nome de usuário" />
+  <input type="password" id="password" placeholder="Senha" />
+  <button id="btnLogin">Entrar</button>
+  <div class="message" id="message"></div>
+  <div class="link">
+    Não tem conta? <a href="cadastro.html">Cadastrar</a>
+  </div>
+</div>
+
+<script>
+  const btnLogin = document.getElementById('btnLogin');
+  const message = document.getElementById('message');
+
+  function getUsers() {
+    return JSON.parse(localStorage.getItem('users') || '{}');
+  }
+
+  btnLogin.addEventListener('click', () => {
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value.trim();
+
+    if (!username || !password) {
+      message.textContent = 'Por favor, preencha todos os campos.';
+      return;
+    }
+
+    let users = getUsers();
+
+    if (!users[username]) {
+      message.textContent = 'Usuário não encontrado.';
+      return;
+    }
+
+    if (users[username].password !== password) {
+      message.textContent = 'Senha incorreta.';
+      return;
+    }
+
+    // Login ok - salvar usuário atual e redirecionar
+    localStorage.setItem('loggedUser', username);
+    window.location.href = 'calendar.html';
+  });
+</script>
+
+</body>
+</html>
