@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Calendário, Matérias e Anotações</title>
+  <style>
+    /* Barra superior */
+    #top-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 50px;
+      background: #A8DADC; /* azul pastel */
+      color: #1D3557; /* azul escuro para contraste */
+      font-family: 'Comic Sans MS', cursive, sans-serif;
+      font-weight: bold;
+      font-size: 1.5rem;
+      display: flex;
+      align-items: center;
+      padding-left: 20px;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+      z-index: 2000;
+    }
+
+    body {
+      font-family: 'Comic Sans MS', cursive, sans-serif;
+      margin: 0;
+      display: flex;
+      height: 100vh;
+      padding-top: 50px; /* espaço para a barra superior */
+      background: #FDF6E3; /* branco amarelado pastel */
+    }
+
+    /* Sidebar esquerda */
+    #sidebar-left {
+      width: 220px;
+      background: #FFE066; /* amarelo pastel */
+      color: #264653; /* verde escuro para contraste */
+      padding: 20px;
+      box-sizing: border-box;
+      border-right: 2px solid #52B788; /* verde pastel */
+    }
+
+    #sidebar-left h2 {
+      margin-top: 0;
+      margin-bottom: 15px;
+      color: #2F9E44; /* verde vivo */
+      text-shadow: 1px 1px 0 #fff;
+    }
+
+    #sidebar-left ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    #sidebar-left ul li {
+      margin-bottom: 12px;
+    }
+
+    #sidebar-left ul li a {
+      color: #1B4332; /* verde escuro */
+      text-decoration: none;
+      cursor: pointer;
+      font-weight: 600;
+      transition: color 0.3s ease;
+    }
+
+    #sidebar-left ul li a:hover {
+      color: #40916C; /* verde claro */
+      text-decoration: underline;
+    }
+
+    #logout-btn {
+      margin-top: 15px;
+      padding: 10px;
+      background: #E76F51;
+      border: none;
+      color: white;
+      border-radius: 12px;
+      cursor: pointer;
+      width: 100%;
+      font-weight: 700;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+      transition: background-color 0.3s ease;
+    }
+
+    #logout-btn:hover {
+      background: #C65A3D;
+    }
+
+    /* Área principal */
+    #main {
+      flex: 1;
+      padding: 25px 30px;
+      box-sizing: border-box;
+      overflow-y: auto;
+      background: #D0F4DE; /* verde claro pastel */
+      border-radius: 10px;
+      margin: 10px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      transition: background-color 0.3s ease;
+    }
+
+    /* Calendário */
+    #calendar {
+      max-width: 650px;
+      margin: auto;
+    }
+
+    #calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    #calendar-header button {
+      padding: 7px 14px;
+      cursor: pointer;
+      border: none;
+      background: #74C69D; /* verde pastel */
+      color: #1B4332;
+      border-radius: 8px;
+      font-weight: bold;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+      transition: background-color 0.3s ease;
+    }
+
+    #calendar-header button:hover {
+      background: #52B788;
+      color: white;
+    }
+
+    #month-year {
+      font-size: 1.4em;
+      font-weight: 700;
+      color: #1B4332;
+      text-transform: capitalize;
+    }
+
+    #days {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      margin-top: 10px;
+      text-align: center;
+      font-weight: bold;
+      color: #40916C;
+      font-size: 1.05em;
+      text-shadow: 1px 1px 0 #fff;
+    }
+
+    #dates {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .date-cell {
+      padding: 12px;
+      border: 1px solid #74C69D;
+      min-height: 80px;
+      cursor: pointer;
+      position: relative;
+      background: #FFFFFF;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      transition: background-color 0.3s ease, transform 0.15s ease;
+    }
+
+    .date-cell:hover {
+      background: #A8DADC;
+      transform: translateY(-3px);
+      box-shadow: 0 6px 14px rgba(0,0,0,0.15);
+    }
+
+    .date-cell.inactive {
+      color: #B0B0B0;
+      background: #F8F9FA;
+      cursor: default;
+      box-shadow: none;
+      transform: none;
+    }
+
+    .date-number {
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: #1B4332;
+    }
+
+    .reminder {
+      background: #FFD166; /* amarelo pastel */
+      color: #6A4C93; /* roxo pastel para contraste divertido */
+      font-size: 0.85em;
+      padding: 4px 6px;
+      margin-top: 6px;
+      border-radius: 10px;
+      cursor: pointer;
+      word-break: break-word;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: background-color 0.25s ease;
+    }
+
+    .reminder:hover {
+      background: #FFB703;
+      color: white;
+    }
+
+    /* Modal */
+    #modal-bg {
+      position: fixed;
+      top:0;
+      left:0;
+      width:100%;
+      height:100%;
+      background: rgba(168, 218, 220, 0.85); /* azul pastel translúcido */
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 3000;
+    }
+
+    #modal {
+      background: #FFFFFF;
+      padding: 25px;
+      border-radius: 15px;
+      width: 320px;
+      box-sizing: border-box;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+      font-weight: 600;
+    }
+
+    #modal h3 {
+      margin-top: 0;
+      color: #264653;
+      text-align: center;
+    }
+
+    #modal-date {
+      color: #2F9E44;
+      font-weight: 700;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    #modal input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      margin-bottom: 20px;
+      box-sizing: border-box;
+      border-radius: 12px;
+      border: 1.5px solid #74C69D;
+      font-family: 'Comic Sans MS', cursive, sans-serif;
+      font-size: 1em;
+    }
+
+    #modal input[type="text"]:focus {
+      border-color: #52B788;
+      outline: none;
+    }
+
+    #modal button {
+      padding: 10px 16px;
+      margin-right: 12px;
+      border-radius: 10px;
+      border: none;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+      transition: background-color 0.3s ease;
+    }
+
+    #save-reminder {
+      background: #2A9D8F;
+      color: white;
+    }
+
+    #save-reminder:hover {
+      background: #21867A;
+    }
+
+    #cancel-reminder {
+      background: #E76F51;
+      color: white;
+    }
+
+    #cancel-reminder:hover {
+      background: #C65A3D;
+    }
+
+    /* Sidebar direita: Anotações */
+    #sidebar-right {
+      width: 320px;
+      background: #CAF0F8; /* azul pastel */
+      padding: 20px;
+      box-sizing: border-box;
+      border-left: 2px solid #52B788;
+      overflow-y: auto;
+      border-radius: 0 12px 12px 0;
+    }
+
+    #sidebar-right h2 {
+      margin-top: 0;
+      margin-bottom: 15px;
+      color: #1B4332;
+      font-weight: 700;
+      text-shadow: 1px 1px 0 #fff;
+    }
+
+    .note-section {
+      margin-bottom: 25px;
+    }
+
+    .note-section label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 8px;
+      color: #264653;
+      font-size: 1.05em;
+    }
+
+    .note-section textarea {
+      width: 100%;
+      height: 110px;
+      resize: vertical;
+      padding: 10px;
+      font-size: 1em;
+      box-sizing: border-box;
+      border-radius: 12px;
+      border: 1.5px solid #74C69D;
+      font-family: 'Comic Sans MS', cursive, sans-serif;
+      transition: border-color 0.3s ease;
+    }
+
+    .note-section textarea:focus {
+      border-color: #52B788;
+      outline: none;
+    }
+
+    /* Scrollbar styles for right sidebar */
+    #sidebar-right::-webkit-scrollbar {
+      width: 10px;
+    }
+
+    #sidebar-right::-webkit-scrollbar-thumb {
+      background-color: #52B788;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Barra superior -->
+  <div id="top-bar">Estudo+</div>
+
+  <!-- Sidebar esquerda -->
+  <div id="sidebar-left">
+    <h2>Matérias</h2>
+    <ul id="subjects-list">
+      <li><a href="#" data-url="materia-matematica.html">Matemática</a></li>
+      <li><a href="#" data-url="materia-portugues.html">Português</a></li>
+      <li><a href="#" data-url="materia-historia.html">História</a></li>
+      <li><a href="#" data-url="materia-ciencias.html">Ciências</a></li>
+    </ul>
+    <button id="logout-btn">Sair</button>
+  </div>
+
+  <!-- Área principal -->
+  <div id="main">
+    <div id="calendar">
+      <div id="calendar-header">
+        <button id="prev-month">&lt;</button>
+        <div id="month-year"></div>
+        <button id="next-month">&gt;</button>
+      </div>
+      <div id="days">
+        <div>Dom</div><div>Seg</div><div>Ter</div><div>Qua</div><div>Qui</div><div>Sex</div><div>Sáb</div>
+      </div>
+      <div id="dates"></div>
+    </div>
+  </div>
+
+  <!-- Sidebar direita -->
+  <div id="sidebar-right">
+    <h2>Anotações</h2>
+    <div class="note-section">
+      <label for="metas">Metas</label>
+      <textarea id="metas" placeholder="Digite suas metas..."></textarea>
+    </div>
+    <div class="note-section">
+      <label for="focos">Seus focos atuais</label>
+      <textarea id="focos" placeholder="Digite seus focos atuais..."></textarea>
+    </div>
+    <div class="note-section">
+      <label for="atividades">Atividades realizadas</label>
+      <textarea id="atividades" placeholder="Digite as atividades realizadas..."></textarea>
+    </div>
+  </div>
+
+  <!-- Modal para adicionar lembrete -->
+  <div id="modal-bg">
+    <div id="modal">
+      <h3>Adicionar Lembrete</h3>
+      <div id="modal-date"></div>
+      <input type="text" id="reminder-text" placeholder="Digite o lembrete" />
+      <div>
+        <button id="save-reminder">Salvar</button>
+        <button id="cancel-reminder">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Verifica se usuário está logado
+    const loggedUser = localStorage.getItem('loggedUser');
+    if (!loggedUser) {
+      alert('Você precisa estar logado para acessar esta página.');
+      window.location.href = 'login.html';
+    }
+
+    // Logout
+    document.getElementById('logout-btn').addEventListener('click', () => {
+      localStorage.removeItem('loggedUser');
+      window.location.href = 'login.html';
+    });
+
+    // Redireciona para a página da matéria ao clicar
+    const subjectsList = document.getElementById('subjects-list');
+    subjectsList.addEventListener('click', (e) => {
+      if(e.target.tagName === 'A') {
+        e.preventDefault();
+        const url = e.target.getAttribute('data-url');
+        window.location.href = url;
+      }
+    });
+
+    // Calendário
+    const monthYearDisplay = document.getElementById('month-year');
+    const datesContainer = document.getElementById('dates');
+    const prevMonthBtn = document.getElementById('prev-month');
+    const nextMonthBtn = document.getElementById('next-month');
+    const modalBg = document.getElementById('modal-bg');
+    const modalDateDisplay = document.getElementById('modal-date');
+    const reminderInput = document.getElementById('reminder-text');
+    const saveReminderBtn = document.getElementById('save-reminder');
+    const cancelReminderBtn = document.getElementById('cancel-reminder');
+
+    let currentDate = new Date();
+    let selectedDate = null;
+
+    // Funções para armazenamento com base no usuário
+    function loadReminders() {
+      const rems = localStorage.getItem(`reminders_${loggedUser}`);
+      return rems ? JSON.parse(rems) : {};
+    }
+
+    function saveReminders(reminders) {
+      localStorage.setItem(`reminders_${loggedUser}`, JSON.stringify(reminders));
+    }
+
+    function formatDateKey(date) {
+      return date.toISOString().split('T')[0]; // yyyy-mm-dd
+    }
+
+    function renderCalendar() {
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+
+      monthYearDisplay.textContent = currentDate.toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+
+      const firstDay = new Date(year, month, 1);
+      const firstWeekDay = firstDay.getDay(); // 0=Dom, 6=Sab
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+      datesContainer.innerHTML = '';
+
+      const reminders = loadReminders();
+
+      // Dias do mês anterior (inativos)
+      for(let i = firstWeekDay - 1; i >= 0; i--) {
+        const cell = document.createElement('div');
+        cell.className = 'date-cell inactive';
+        cell.textContent = daysInPrevMonth - i;
+        datesContainer.appendChild(cell);
+      }
+
+      // Dias do mês atual
+      for(let day = 1; day <= daysInMonth; day++) {
+        const cell = document.createElement('div');
+        cell.className = 'date-cell';
+
+        const dateObj = new Date(year, month, day);
+        const dateKey = formatDateKey(dateObj);
+
+        const dateNumber = document.createElement('div');
+        dateNumber.className = 'date-number';
+        dateNumber.textContent = day;
+        cell.appendChild(dateNumber);
+
+        // Mostrar lembretes
+        if(reminders[dateKey]) {
+          reminders[dateKey].forEach(text => {
+            const rem = document.createElement('div');
+            rem.className = 'reminder';
+            rem.textContent = text;
+            rem.title = text;
+            cell.appendChild(rem);
+          });
+        }
+
+        // Clique para abrir modal de lembrete
+        cell.addEventListener('click', () => {
+          selectedDate = dateObj;
+          modalDateDisplay.textContent = `Data: ${dateKey}`;
+          reminderInput.value = '';
+          modalBg.style.display = 'flex';
+          reminderInput.focus();
+        });
+
+        datesContainer.appendChild(cell);
+      }
+    }
+
+    prevMonthBtn.addEventListener('click', () => {
+      currentDate.setMonth(currentDate.getMonth() - 1);
+      renderCalendar();
+    });
+
+    nextMonthBtn.addEventListener('click', () => {
+      currentDate.setMonth(currentDate.getMonth() + 1);
+      renderCalendar();
+    });
+
+    saveReminderBtn.addEventListener('click', () => {
+      const text = reminderInput.value.trim();
+      if(text === '') {
+        alert('Digite algum lembrete.');
+        return;
+      }
+      const reminders = loadReminders();
+      const key = formatDateKey(selectedDate);
+      if(!reminders[key]) reminders[key] = [];
+      reminders[key].push(text);
+      saveReminders(reminders);
+      modalBg.style.display = 'none';
+      renderCalendar();
+    });
+
+    cancelReminderBtn.addEventListener('click', () => {
+      modalBg.style.display = 'none';
+    });
+
+    // Fechar modal clicando fora dele
+    modalBg.addEventListener('click', e => {
+      if(e.target === modalBg) {
+        modalBg.style.display = 'none';
+      }
+    });
+
+    // Anotações
+    const metas = document.getElementById('metas');
+    const focos = document.getElementById('focos');
+    const atividades = document.getElementById('atividades');
+
+    // Carregar notas
+    metas.value = localStorage.getItem(`notas_metas_${loggedUser}`) || '';
+    focos.value = localStorage.getItem(`notas_focos_${loggedUser}`) || '';
+    atividades.value = localStorage.getItem(`notas_atividades_${loggedUser}`) || '';
+
+    // Salvar notas automaticamente ao digitar
+    metas.addEventListener('input', () => {
+      localStorage.setItem(`notas_metas_${loggedUser}`, metas.value);
+    });
+
+    focos.addEventListener('input', () => {
+      localStorage.setItem(`notas_focos_${loggedUser}`, focos.value);
+    });
+
+    atividades.addEventListener('input', () => {
+      localStorage.setItem(`notas_atividades_${loggedUser}`, atividades.value);
+    });
+
+    renderCalendar();
+  </script>
+</body>
+</html>
